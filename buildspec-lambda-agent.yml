@@ -13,7 +13,3 @@ phases:
   post_build:
     commands:
       - docker push $REPO_URI:latest
-
-env:
-  parameter-store:
-    DOCKERHUB_PASS: /dockerhub/password
