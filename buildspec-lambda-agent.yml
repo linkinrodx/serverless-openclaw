@@ -1,0 +1,19 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - ECR_URI="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
+      - REPO_URI="$ECR_URI/$ECR_REPO_NAME"
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_URI
+  build:
+    commands:
+      - docker build -f packages/lambda-agent/Dockerfile -t $ECR_REPO_NAME .
+      - docker tag $ECR_REPO_NAME:latest $REPO_URI:latest
+  post_build:
+    commands:
+      - docker push $REPO_URI:latest
+
+env:
+  parameter-store:
+    DOCKERHUB_PASS: /dockerhub/password
