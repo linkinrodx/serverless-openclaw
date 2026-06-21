@@ -3,7 +3,7 @@
 # OpenClaw is loaded via extensionAPI.js (file:// import to bypass exports map)
 
 # Stage 1: Build lambda-agent package
-FROM --platform=linux/arm64 node:22-slim AS builder
+FROM --platform=linux/arm64 public.ecr.aws/lambda/nodejs:22 AS builder
 
 WORKDIR /build
 
