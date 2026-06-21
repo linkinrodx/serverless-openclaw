@@ -6,6 +6,8 @@ import {
   BEDROCK_BASE_MODEL,
 } from "../src/provider-config.js";
 
+const GOOGLE_DEFAULT_MODEL = "google/gemini-3-flash-preview";
+
 describe("resolveCrisPrefix", () => {
   it("returns 'eu' for eu-central-1", () => {
     expect(resolveCrisPrefix("eu-central-1")).toBe("eu");
@@ -151,5 +153,31 @@ describe("resolveProviderConfig", () => {
   it("does not expose bedrockDiscovery on the config object", () => {
     const config = resolveProviderConfig({ AI_PROVIDER: "bedrock" });
     expect(config).not.toHaveProperty("bedrockDiscovery");
+  });
+});
+
+describe("resolveProviderConfig — google", () => {
+  it("resolves google defaults correctly", () => {
+    const config = resolveProviderConfig({ AI_PROVIDER: "google" });
+    expect(config.openclawProvider).toBe("google");
+    expect(config.openclawApi).toBe("google-generative-ai");
+    expect(config.openclawAuth).toBe("api-key");
+    expect(config.defaultModel).toBe(GOOGLE_DEFAULT_MODEL);
+  });
+
+  it("applies AI_MODEL override for google", () => {
+    const config = resolveProviderConfig({
+      AI_PROVIDER: "google",
+      AI_MODEL: "google/gemini-3.1-pro-preview",
+    });
+    expect(config.defaultModel).toBe("google/gemini-3.1-pro-preview");
+  });
+
+  it("ignores AWS_REGION for google (no CRIS prefix needed)", () => {
+    const config = resolveProviderConfig({
+      AI_PROVIDER: "google",
+      AWS_REGION: "eu-central-1",
+    });
+    expect(config.defaultModel).toBe(GOOGLE_DEFAULT_MODEL);
   });
 });

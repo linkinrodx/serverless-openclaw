@@ -55,7 +55,7 @@ export async function handler(
   if (!initialized) {
     let apiKey: string | undefined;
 
-    // When using Anthropic, resolve the API key from SSM (existing behavior).
+    // When using Anthropic or Google, resolve the API key from SSM.
     // When using Bedrock, skip SSM — authentication is via IAM role credentials.
     if (providerConfig.provider === "anthropic") {
       const ssmKeyPath =
@@ -64,10 +64,18 @@ export async function handler(
 
       const secrets = await resolveSecrets([ssmKeyPath]);
       apiKey = secrets.get(ssmKeyPath);
+    } else if (providerConfig.provider === "google") {
+      const ssmKeyPath =
+        process.env.SSM_GEMINI_API_KEY ??
+        "/serverless-openclaw/secrets/gemini-api-key";
+
+      const secrets = await resolveSecrets([ssmKeyPath]);
+      apiKey = secrets.get(ssmKeyPath);
     }
 
     await initConfig({
-      anthropicApiKey: apiKey,
+      anthropicApiKey: providerConfig.provider === "anthropic" ? apiKey : undefined,
+      googleApiKey: providerConfig.provider === "google" ? apiKey : undefined,
       provider: providerConfig.provider,
       awsRegion: process.env.AWS_REGION,
     });

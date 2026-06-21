@@ -8,6 +8,7 @@ const SECRET_PARAMS = [
   { id: "BridgeAuthToken", path: SSM_SECRETS.BRIDGE_AUTH_TOKEN, desc: "Bridge auth token" },
   { id: "OpenclawGatewayToken", path: SSM_SECRETS.OPENCLAW_GATEWAY_TOKEN, desc: "OpenClaw Gateway token" },
   { id: "AnthropicApiKey", path: SSM_SECRETS.ANTHROPIC_API_KEY, desc: "Anthropic API key" },
+  { id: "GeminiApiKey", path: SSM_SECRETS.GEMINI_API_KEY, desc: "Gemini API key" },
   { id: "TelegramBotToken", path: SSM_SECRETS.TELEGRAM_BOT_TOKEN, desc: "Telegram bot token" },
   { id: "TelegramWebhookSecret", path: SSM_SECRETS.TELEGRAM_WEBHOOK_SECRET, desc: "Telegram webhook secret" },
 ] as const;
@@ -20,10 +21,17 @@ export class SecretsStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: SecretsStackProps) {
     super(scope, id, props);
 
-    const isBedrock = props?.aiProvider === "bedrock";
+    const aiProvider = props?.aiProvider;
+    const isAnthropic = aiProvider === "anthropic";
+    const isGoogle = aiProvider === "google";
 
     for (const { id: paramId, path, desc } of SECRET_PARAMS) {
-      if (isBedrock && paramId === "AnthropicApiKey") {
+      // Skip AnthropicApiKey when provider is not anthropic
+      if (!isAnthropic && paramId === "AnthropicApiKey") {
+        continue;
+      }
+      // Only create GeminiApiKey when provider is google
+      if (!isGoogle && paramId === "GeminiApiKey") {
         continue;
       }
       const cfnParam = new cdk.CfnParameter(this, paramId, {

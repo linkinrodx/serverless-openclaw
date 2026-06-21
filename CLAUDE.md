@@ -76,7 +76,7 @@ packages/
 
 **AGENT_RUNTIME feature flag:** `fargate` (default) | `lambda` | `both`. Controls which compute stacks are deployed and which routing path `routeMessage` uses. When `both`: Smart routing via `classifyRoute()` in `packages/gateway/src/services/route-classifier.ts` — priority order: 1) Reuse running Fargate (don't waste), 2) User hint `/heavy` or `/fargate` → Fargate new, 3) Default → Lambda, 4) Lambda failure → Fargate fallback. Cold start preview: when Fargate cold starts via hint, Lambda is invoked in parallel with `disableTools=true` to provide quick interim response.
 
-**AI_PROVIDER feature flag:** `anthropic` (default) | `bedrock`. Controls which AI backend is used. Bedrock uses IAM role credentials (no API key needed). `AI_MODEL` overrides the provider-default model. SecretsStack skips `AnthropicApiKey` when `AI_PROVIDER=bedrock`.
+**AI_PROVIDER feature flag:** `anthropic` (default) | `bedrock` | `google`. Controls which AI backend is used. Bedrock uses IAM role credentials (no API key needed). `AI_MODEL` overrides the provider-default model. SecretsStack skips `AnthropicApiKey` when `AI_PROVIDER=bedrock` or `AI_PROVIDER=google`, and creates `GeminiApiKey` instead when `AI_PROVIDER=google`.
 
 ## Critical Constraints
 

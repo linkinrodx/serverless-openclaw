@@ -1,4 +1,4 @@
-export type AiProvider = "anthropic" | "bedrock";
+export type AiProvider = "anthropic" | "bedrock" | "google";
 
 export interface ProviderConfig {
   provider: AiProvider;
@@ -56,14 +56,20 @@ export const PROVIDER_DEFAULTS = {
     openclawApi: "bedrock-converse-stream",
     openclawAuth: "aws-sdk",
   },
+  google: {
+    openclawProvider: "google",
+    openclawApi: "google-generative-ai",
+    openclawAuth: "api-key",
+    defaultModel: "google/gemini-3-flash-preview",
+  },
 } as const;
 
-const VALID_PROVIDERS: readonly string[] = ["anthropic", "bedrock"];
+const VALID_PROVIDERS: readonly string[] = ["anthropic", "bedrock", "google"];
 
 export function validateProvider(value: string): asserts value is AiProvider {
   if (!VALID_PROVIDERS.includes(value)) {
     throw new Error(
-      `Unsupported AI_PROVIDER: '${value}'. Valid values: anthropic, bedrock`,
+      `Unsupported AI_PROVIDER: '${value}'. Valid values: anthropic, bedrock, google`,
     );
   }
 }
@@ -89,7 +95,7 @@ export function resolveBedrockModel(region?: string, aiModel?: string): string {
   return prefix ? `${prefix}.${BEDROCK_BASE_MODEL}` : BEDROCK_BASE_MODEL;
 }
 
-export function resolveModel(provider: "anthropic", aiModel?: string): string {
+export function resolveModel(provider: "anthropic" | "google", aiModel?: string): string {
   return aiModel || PROVIDER_DEFAULTS[provider].defaultModel;
 }
 

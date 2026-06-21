@@ -285,7 +285,7 @@ Set in `.env` or exported before running CDK commands.
 | Variable        | Default              | Values                          | Purpose                     |
 | --------------- | -------------------- | ------------------------------- | --------------------------- |
 | `AGENT_RUNTIME` | `fargate`            | `fargate` \| `lambda` \| `both` | Compute path selection      |
-| `AI_PROVIDER`   | `anthropic`          | `anthropic` \| `bedrock`        | AI provider selection       |
+| `AI_PROVIDER`   | `anthropic`          | `anthropic` \| `bedrock` \| `google` | AI provider selection       |
 | `AI_MODEL`      | _(provider default)_ | any model ID                    | Override default model      |
 | `DEPLOY_WEB`    | `true`               | `true` \| `false`               | Include WebStack deployment |
 
@@ -448,17 +448,18 @@ ComputeStack resources will be skipped. To rollback: set `AGENT_RUNTIME=fargate`
 
 ## 10. AI Provider Configuration
 
-By default the system uses Anthropic (requires `AnthropicApiKey` in SecretsStack). Set `AI_PROVIDER=bedrock` to use Amazon Bedrock instead — no API key needed, authentication uses the Lambda execution role / Fargate task role via the AWS SDK default credential chain.
+By default the system uses Anthropic (requires `AnthropicApiKey` in SecretsStack). Set `AI_PROVIDER=bedrock` to use Amazon Bedrock instead — no API key needed, authentication uses the Lambda execution role / Fargate task role via the AWS SDK default credential chain. Set `AI_PROVIDER=google` to use Google Gemini via API key.
 
-| Variable      | Default              | Description                  |
-| ------------- | -------------------- | ---------------------------- |
-| `AI_PROVIDER` | `anthropic`          | `anthropic` or `bedrock`     |
-| `AI_MODEL`    | _(provider default)_ | Override model ID (optional) |
+| Variable      | Default              | Description                              |
+| ------------- | -------------------- | ---------------------------------------- |
+| `AI_PROVIDER` | `anthropic`          | `anthropic`, `bedrock`, or `google`      |
+| `AI_MODEL`    | _(provider default)_ | Override model ID (optional)             |
 
 **Default models:**
 
 - Anthropic: `claude-sonnet-4-20250514`
 - Bedrock: region-aware (see table below)
+- Google: `google/gemini-3-flash-preview`
 
 **Bedrock model selection — Cross-Region Inference (CRIS):**
 
@@ -490,6 +491,16 @@ The SecretsStack skips the `AnthropicApiKey` SSM parameter when `AI_PROVIDER=bed
 ```bash
 AI_PROVIDER=anthropic npx cdk deploy --all --profile $AWS_PROFILE --region $AWS_REGION
 ```
+
+### Switching to Google Gemini
+
+```bash
+# In .env
+AI_PROVIDER=google
+GEMINI_API_KEY=<your-gemini-api-key>
+```
+
+The SecretsStack skips `AnthropicApiKey` and creates `GeminiApiKey` instead when `AI_PROVIDER=google`. OpenClaw reads `GEMINI_API_KEY` from the environment at runtime. Get your API key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey).
 
 ---
 

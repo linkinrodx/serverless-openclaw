@@ -46,10 +46,16 @@ export class ComputeStack extends cdk.Stack {
       this, "OpenclawGatewayToken",
       { parameterName: SSM_SECRETS.OPENCLAW_GATEWAY_TOKEN },
     );
-    const anthropicApiKey = props.aiProvider !== "bedrock"
+    const anthropicApiKey = props.aiProvider === "anthropic"
       ? ssm.StringParameter.fromSecureStringParameterAttributes(
           this, "AnthropicApiKey",
           { parameterName: SSM_SECRETS.ANTHROPIC_API_KEY },
+        )
+      : undefined;
+    const geminiApiKey = props.aiProvider === "google"
+      ? ssm.StringParameter.fromSecureStringParameterAttributes(
+          this, "GeminiApiKey",
+          { parameterName: SSM_SECRETS.GEMINI_API_KEY },
         )
       : undefined;
     const telegramBotToken = ssm.StringParameter.fromSecureStringParameterAttributes(
@@ -103,6 +109,7 @@ export class ComputeStack extends cdk.Stack {
         BRIDGE_AUTH_TOKEN: ecs.Secret.fromSsmParameter(bridgeAuthToken),
         OPENCLAW_GATEWAY_TOKEN: ecs.Secret.fromSsmParameter(openclawGatewayToken),
         ...(anthropicApiKey ? { ANTHROPIC_API_KEY: ecs.Secret.fromSsmParameter(anthropicApiKey) } : {}),
+        ...(geminiApiKey ? { GEMINI_API_KEY: ecs.Secret.fromSsmParameter(geminiApiKey) } : {}),
         TELEGRAM_BOT_TOKEN: ecs.Secret.fromSsmParameter(telegramBotToken),
       },
       logging: ecs.LogDrivers.awsLogs({

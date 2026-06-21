@@ -5,6 +5,7 @@ import type { ConfigInitResult } from "./types.js";
 
 interface InitConfigOptions {
   anthropicApiKey?: string;
+  googleApiKey?: string;
   provider?: AiProvider;
   awsRegion?: string;
 }
@@ -40,6 +41,9 @@ export async function initConfig(
   // Skip when using Bedrock — it authenticates via IAM role credentials
   if (!isBedrock && options?.anthropicApiKey) {
     process.env.ANTHROPIC_API_KEY = options.anthropicApiKey;
+  }
+  if (options?.googleApiKey) {
+    process.env.GEMINI_API_KEY = options.googleApiKey;
   }
 
   return { configDir, sessionsDir };
