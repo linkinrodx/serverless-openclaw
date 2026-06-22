@@ -99,16 +99,8 @@ export class ApiStack extends cdk.Stack {
     };
 
     // Common bundling options for NodejsFunction
-    // Core @aws-sdk/* clients are provided by Lambda runtime, but lib-dynamodb is not
     const bundlingDefaults = {
-      externalModules: [
-        "@aws-sdk/client-apigatewaymanagementapi",
-        "@aws-sdk/client-dynamodb",
-        "@aws-sdk/client-ec2",
-        "@aws-sdk/client-ecs",
-        "@aws-sdk/client-lambda",
-        "@aws-sdk/client-ssm",
-      ],
+      externalModules: ["@aws-sdk/*"],
       sourceMap: true,
       target: "node22",
     };
@@ -121,6 +113,9 @@ export class ApiStack extends cdk.Stack {
       projectRoot: monorepoRoot,
       depsLockFilePath: path.join(monorepoRoot, "package-lock.json"),
       bundling: bundlingDefaults,
+      // @aws-sdk/lib-dynamodb is NOT part of the Lambda runtime's built-in SDK,
+      // so it must be installed separately along with its transitive deps
+      nodeModules: ["@aws-sdk/lib-dynamodb"],
     };
 
     const makeLogGroup = (id: string, name: string) =>
