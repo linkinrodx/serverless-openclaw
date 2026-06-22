@@ -100,7 +100,7 @@ export async function handler(
       // Always upload session after run (even if no payloads)
       await sync.upload(event.userId, event.sessionId);
 
-      // Send Telegram response directly (fire-and-forget from gateway perspective)
+      console.log("[agent] channel=%s chatId=%s payloads=%d", event.channel, event.telegramChatId, result.payloads?.length ?? 0);
       if (event.channel === "telegram" && event.telegramChatId) {
         await sendTelegramResponse(event.telegramChatId, result.payloads);
       }
@@ -135,6 +135,7 @@ async function sendTelegramResponse(
     process.env.SSM_TELEGRAM_BOT_TOKEN ??
     "/serverless-openclaw/secrets/telegram-bot-token";
 
+  console.log("[agent] resolving bot token from SSM path:", botTokenSsmPath);
   const secrets = await resolveSecrets([botTokenSsmPath]);
   const botToken = secrets.get(botTokenSsmPath);
 
@@ -143,8 +144,10 @@ async function sendTelegramResponse(
     return;
   }
 
+  console.log("[agent] bot token resolved, sending %d payloads to chat %s", payloads?.length ?? 0, chatId);
   for (const payload of payloads ?? []) {
     if (payload.text) {
+      console.log("[agent] sending text to Telegram: %s", payload.text.substring(0, 50));
       try {
         const resp = await fetch(
           `https://api.telegram.org/bot${botToken}/sendMessage`,
@@ -160,10 +163,14 @@ async function sendTelegramResponse(
         if (!resp.ok) {
           const errBody = await resp.text();
           console.error("[agent] Telegram API error:", resp.status, errBody);
+        } else {
+          console.log("[agent] Telegram message sent successfully");
         }
       } catch (err) {
         console.error("[agent] failed to send Telegram message:", err);
       }
+    } else {
+      console.log("[agent] payload has no text, skipping");
     }
   }
 }
