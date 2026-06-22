@@ -24,7 +24,7 @@ let initialized = false;
  * 3. Download session file from S3
  * 4. Run agent via runEmbeddedPiAgent()
  * 5. Upload session file back to S3
- * 6. Return response
+ * 6. If Telegram channel, send response directly via Telegram API
  */
 export async function handler(
   event: LambdaAgentEvent,
@@ -55,8 +55,6 @@ export async function handler(
   if (!initialized) {
     let apiKey: string | undefined;
 
-    // When using Anthropic or Google, resolve the API key from SSM.
-    // When using Bedrock, skip SSM — authentication is via IAM role credentials.
     if (providerConfig.provider === "anthropic") {
       const ssmKeyPath =
         process.env.SSM_ANTHROPIC_API_KEY ??
@@ -102,6 +100,11 @@ export async function handler(
       // Always upload session after run (even if no payloads)
       await sync.upload(event.userId, event.sessionId);
 
+      // Send Telegram response directly (fire-and-forget from gateway perspective)
+      if (event.channel === "telegram" && event.telegramChatId) {
+        await sendTelegramResponse(event.telegramChatId, result.payloads);
+      }
+
       return {
         success: true,
         payloads: result.payloads,
@@ -121,5 +124,46 @@ export async function handler(
     }
   } finally {
     await lock.release();
+  }
+}
+
+async function sendTelegramResponse(
+  chatId: string,
+  payloads?: Array<{ text?: string; mediaUrl?: string; isError?: boolean }>,
+): Promise<void> {
+  const botTokenSsmPath =
+    process.env.SSM_TELEGRAM_BOT_TOKEN ??
+    "/serverless-openclaw/secrets/telegram-bot-token";
+
+  const secrets = await resolveSecrets([botTokenSsmPath]);
+  const botToken = secrets.get(botTokenSsmPath);
+
+  if (!botToken) {
+    console.error("[agent] cannot send Telegram response: bot token not found");
+    return;
+  }
+
+  for (const payload of payloads ?? []) {
+    if (payload.text) {
+      try {
+        const resp = await fetch(
+          `https://api.telegram.org/bot${botToken}/sendMessage`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: Number(chatId),
+              text: payload.text,
+            }),
+          },
+        );
+        if (!resp.ok) {
+          const errBody = await resp.text();
+          console.error("[agent] Telegram API error:", resp.status, errBody);
+        }
+      } catch (err) {
+        console.error("[agent] failed to send Telegram message:", err);
+      }
+    }
   }
 }

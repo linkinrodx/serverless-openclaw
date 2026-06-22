@@ -10,7 +10,7 @@ import { startTask } from "../services/container.js";
 import { sendTelegramMessage } from "../services/telegram.js";
 import { resolveUserId, verifyOtpAndLink } from "../services/identity.js";
 import { resolveSecrets } from "../services/secrets.js";
-import { invokeLambdaAgent } from "../services/lambda-agent.js";
+import { invokeLambdaAgentAsync } from "../services/lambda-agent.js";
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const ecs = new ECSClient({});
@@ -180,15 +180,8 @@ export async function handler(event: {
       environment: taskEnv,
     },
     agentRuntime,
-    invokeLambdaAgent: lambdaAgentFunctionArn ? invokeLambdaAgent : undefined,
+    invokeLambdaAgentAsync: lambdaAgentFunctionArn ? invokeLambdaAgentAsync : undefined,
     lambdaAgentFunctionArn: lambdaAgentFunctionArn || undefined,
-    onLambdaResponse: async (payloads) => {
-      for (const payload of payloads ?? []) {
-        if (payload.text && botToken) {
-          await sendTelegramMessage(fetch as never, botToken, connectionId, payload.text);
-        }
-      }
-    },
     onColdStartPreview: botToken
       ? async (previewText) => {
           await sendTelegramMessage(fetch as never, botToken, connectionId, `💡 ${previewText}`);

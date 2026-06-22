@@ -12,7 +12,6 @@ import type {
   PendingMessageItem,
   TaskStateItem,
 } from "@serverless-openclaw/shared";
-import type { LambdaAgentResponse } from "@serverless-openclaw/shared";
 import type { StartTaskParams } from "./container.js";
 import type { InvokeLambdaAgentParams } from "./lambda-agent.js";
 import { classifyRoute, stripRouteHint } from "./route-classifier.js";
@@ -69,11 +68,9 @@ export interface RouteDeps {
   startTaskParams: StartTaskParams;
   /** Lambda agent runtime support (Phase 2) */
   agentRuntime?: "lambda" | "fargate" | "both";
-  invokeLambdaAgent?: (params: InvokeLambdaAgentParams) => Promise<LambdaAgentResponse>;
+  invokeLambdaAgentAsync?: (params: InvokeLambdaAgentParams) => Promise<void>;
   lambdaAgentFunctionArn?: string;
   sessionId?: string;
-  /** Called with agent payloads after a successful lambda invocation — caller is responsible for delivery */
-  onLambdaResponse?: (payloads: LambdaAgentResponse["payloads"]) => Promise<void>;
   onColdStartPreview?: (previewText: string) => Promise<void>;
 }
 
@@ -167,9 +164,9 @@ async function routeFargate(
  * while Fargate container cold starts. Non-blocking (fire-and-forget).
  */
 async function invokeColdStartPreview(deps: RouteDeps): Promise<void> {
-  if (!deps.invokeLambdaAgent || !deps.lambdaAgentFunctionArn || !deps.onColdStartPreview) return;
+  if (!deps.invokeLambdaAgentAsync || !deps.lambdaAgentFunctionArn || !deps.onColdStartPreview) return;
 
-  const response = await deps.invokeLambdaAgent({
+  deps.invokeLambdaAgentAsync({
     functionArn: deps.lambdaAgentFunctionArn,
     userId: deps.userId,
     sessionId: deps.sessionId ?? `session-${deps.userId}`,
@@ -177,87 +174,21 @@ async function invokeColdStartPreview(deps: RouteDeps): Promise<void> {
     channel: deps.channel,
     connectionId: deps.connectionId,
     disableTools: true,
-  });
-
-  if (response.success && response.payloads?.length) {
-    const text = response.payloads
-      .filter((p) => p.text && !p.isError)
-      .map((p) => p.text)
-      .join("\n");
-    if (text) {
-      await deps.onColdStartPreview(text);
-    }
-  }
+  }).catch((err) => console.warn("Cold start preview invoke failed (non-fatal):", err));
 }
 
 export async function routeMessage(deps: RouteDeps): Promise<RouteResult> {
-  // Phase 2: Lambda agent path
-  if (deps.agentRuntime === "lambda" && deps.invokeLambdaAgent && deps.lambdaAgentFunctionArn) {
-    const response = await deps.invokeLambdaAgent({
+  // Lambda agent path — fire-and-forget, agent sends response via Telegram API
+  if (deps.agentRuntime === "lambda" && deps.invokeLambdaAgentAsync && deps.lambdaAgentFunctionArn) {
+    deps.invokeLambdaAgentAsync({
       functionArn: deps.lambdaAgentFunctionArn,
       userId: deps.userId,
       sessionId: deps.sessionId ?? `session-${deps.userId}`,
       message: deps.message,
       channel: deps.channel,
       connectionId: deps.connectionId,
-    });
-    if (!response.success) {
-      throw new Error(response.error ?? "Lambda agent failed");
-    }
-    if (deps.onLambdaResponse) {
-      await deps.onLambdaResponse(response.payloads);
-    }
+    }).catch((err) => console.error("[lambda] async invoke failed:", err));
     return "lambda";
-  }
-
-  // Smart routing: when agentRuntime=both, classify based on task state and message hints
-  if (deps.agentRuntime === "both" && deps.invokeLambdaAgent && deps.lambdaAgentFunctionArn) {
-    const taskState = await deps.getTaskState(deps.userId);
-    const decision = classifyRoute({ message: deps.message, taskState });
-
-    if (decision === "fargate-reuse") {
-      // Fall through to Fargate path below with the already-fetched taskState
-      return routeFargate(deps, taskState);
-    }
-
-    if (decision === "fargate-new") {
-      // Strip hint and queue to Fargate (new container)
-      const strippedDeps = { ...deps, message: stripRouteHint(deps.message) };
-      const result = await routeFargate(strippedDeps, taskState);
-
-      // Cold start preview: invoke Lambda for quick context while Fargate starts
-      if (
-        (result === "started" || result === "queued") &&
-        deps.onColdStartPreview !== undefined &&
-        deps.invokeLambdaAgent !== undefined &&
-        deps.lambdaAgentFunctionArn
-      ) {
-        invokeColdStartPreview(deps).catch((err) =>
-          console.warn("Cold start preview failed (non-fatal):", err),
-        );
-      }
-
-      return result;
-    }
-
-    // decision === "lambda": try Lambda, fall back to Fargate on failure
-    const response = await deps.invokeLambdaAgent({
-      functionArn: deps.lambdaAgentFunctionArn,
-      userId: deps.userId,
-      sessionId: deps.sessionId ?? `session-${deps.userId}`,
-      message: deps.message,
-      channel: deps.channel,
-      connectionId: deps.connectionId,
-    });
-    if (response.success) {
-      if (deps.onLambdaResponse) {
-        await deps.onLambdaResponse(response.payloads);
-      }
-      return "lambda";
-    }
-    // Lambda failed — fall back to Fargate
-    console.warn("Lambda agent failed, falling back to Fargate:", response.error);
-    return routeFargate(deps, taskState);
   }
 
   // Fargate path (default)

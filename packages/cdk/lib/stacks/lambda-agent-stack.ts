@@ -51,6 +51,7 @@ export class LambdaAgentStack extends cdk.Stack {
         HOME: "/tmp",
         SSM_ANTHROPIC_API_KEY: SSM_SECRETS.ANTHROPIC_API_KEY,
         SSM_GEMINI_API_KEY: SSM_SECRETS.GEMINI_API_KEY,
+        SSM_TELEGRAM_BOT_TOKEN: SSM_SECRETS.TELEGRAM_BOT_TOKEN,
         SESSION_BUCKET: props.dataBucket.bucketName,
         AI_PROVIDER: props.aiProvider ?? "anthropic",
         ...(props.aiModel ? { AI_MODEL: props.aiModel } : {}),
