@@ -99,8 +99,16 @@ export class ApiStack extends cdk.Stack {
     };
 
     // Common bundling options for NodejsFunction
+    // Core @aws-sdk/* clients are provided by Lambda runtime, but lib-dynamodb is not
     const bundlingDefaults = {
-      externalModules: ["@aws-sdk/*"],
+      externalModules: [
+        "@aws-sdk/client-apigatewaymanagementapi",
+        "@aws-sdk/client-dynamodb",
+        "@aws-sdk/client-ec2",
+        "@aws-sdk/client-ecs",
+        "@aws-sdk/client-lambda",
+        "@aws-sdk/client-ssm",
+      ],
       sourceMap: true,
       target: "node22",
     };
