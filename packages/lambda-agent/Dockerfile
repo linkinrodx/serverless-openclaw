@@ -31,13 +31,6 @@ RUN cd ${LAMBDA_TASK_ROOT} && \
     npm install openclaw@${OPENCLAW_VERSION} && \
     npm cache clean --force
 
-# Copy lambda-agent compiled output
-COPY --from=builder /build/packages/lambda-agent/dist/ ${LAMBDA_TASK_ROOT}/dist/
-
-# Copy shared package into node_modules (lambda-agent depends on it)
-COPY --from=builder /build/packages/shared/dist/ ${LAMBDA_TASK_ROOT}/node_modules/@serverless-openclaw/shared/dist/
-COPY --from=builder /build/packages/shared/package.json ${LAMBDA_TASK_ROOT}/node_modules/@serverless-openclaw/shared/
-
 # Install @aws-sdk/lib-dynamodb alongside OpenClaw so Node resolves the
 # client-dynamodb peer from the Lambda runtime's built-in SDK layer.
 # npm will also pull in the @smithy/* transitive deps that @aws-sdk/lib-dynamodb
@@ -45,6 +38,13 @@ COPY --from=builder /build/packages/shared/package.json ${LAMBDA_TASK_ROOT}/node
 RUN cd ${LAMBDA_TASK_ROOT} && \
     npm install @aws-sdk/lib-dynamodb @aws-sdk/util-dynamodb && \
     npm cache clean --force
+
+# Copy lambda-agent compiled output
+COPY --from=builder /build/packages/lambda-agent/dist/ ${LAMBDA_TASK_ROOT}/dist/
+
+# Copy shared package into node_modules (lambda-agent depends on it)
+COPY --from=builder /build/packages/shared/dist/ ${LAMBDA_TASK_ROOT}/node_modules/@serverless-openclaw/shared/dist/
+COPY --from=builder /build/packages/shared/package.json ${LAMBDA_TASK_ROOT}/node_modules/@serverless-openclaw/shared/
 
 # Set HOME to /tmp so OpenClaw config/sessions go to writable directory
 ENV HOME=/tmp
