@@ -99,8 +99,9 @@ export class ApiStack extends cdk.Stack {
     };
 
     // Common bundling options for NodejsFunction
+    // bundleAwsSDK=true: bundle @smithy/* deps that Lambda runtime doesn't include
     const bundlingDefaults = {
-      externalModules: ["@aws-sdk/*"],
+      bundleAwsSDK: true,
       sourceMap: true,
       target: "node22",
     };
@@ -110,12 +111,8 @@ export class ApiStack extends cdk.Stack {
       architecture: lambda.Architecture.ARM_64,
       memorySize: 256,
       timeout: cdk.Duration.seconds(30),
-      projectRoot: monorepoRoot,
-      depsLockFilePath: path.join(monorepoRoot, "package-lock.json"),
       bundling: bundlingDefaults,
-      // @aws-sdk/lib-dynamodb is NOT part of the Lambda runtime's built-in SDK,
-      // so it must be installed separately along with its transitive deps
-      nodeModules: ["@aws-sdk/lib-dynamodb"],
+      depsLockFilePath: path.join(monorepoRoot, "package-lock.json"),
     };
 
     const makeLogGroup = (id: string, name: string) =>
