@@ -6,7 +6,7 @@ import {
   BEDROCK_BASE_MODEL,
 } from "../src/provider-config.js";
 
-const GOOGLE_DEFAULT_MODEL = "google/gemini-3-flash-preview";
+const GOOGLE_DEFAULT_MODEL = "gemini-3-flash-preview";
 
 describe("resolveCrisPrefix", () => {
   it("returns 'eu' for eu-central-1", () => {
@@ -168,9 +168,9 @@ describe("resolveProviderConfig — google", () => {
   it("applies AI_MODEL override for google", () => {
     const config = resolveProviderConfig({
       AI_PROVIDER: "google",
-      AI_MODEL: "google/gemini-3.1-pro-preview",
+      AI_MODEL: "gemini-3.1-pro-preview",
     });
-    expect(config.defaultModel).toBe("google/gemini-3.1-pro-preview");
+    expect(config.defaultModel).toBe("gemini-3.1-pro-preview");
   });
 
   it("ignores AWS_REGION for google (no CRIS prefix needed)", () => {
