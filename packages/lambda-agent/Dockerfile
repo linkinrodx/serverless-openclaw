@@ -38,9 +38,11 @@ COPY --from=builder /build/packages/lambda-agent/dist/ ${LAMBDA_TASK_ROOT}/dist/
 COPY --from=builder /build/packages/shared/dist/ ${LAMBDA_TASK_ROOT}/node_modules/@serverless-openclaw/shared/dist/
 COPY --from=builder /build/packages/shared/package.json ${LAMBDA_TASK_ROOT}/node_modules/@serverless-openclaw/shared/
 
-# Copy AWS SDK dependencies from builder (Lambda runtime provides @aws-sdk/*,
-# but we need @aws-sdk/lib-dynamodb which wraps the base client)
+# Copy AWS SDK dependencies from builder (Lambda runtime provides @aws-sdk/* core clients,
+# but @aws-sdk/lib-dynamodb and its transitive @smithy/* deps are not included)
 COPY --from=builder /build/node_modules/@aws-sdk/lib-dynamodb/ ${LAMBDA_TASK_ROOT}/node_modules/@aws-sdk/lib-dynamodb/
+COPY --from=builder /build/node_modules/@aws-sdk/util-dynamodb/ ${LAMBDA_TASK_ROOT}/node_modules/@aws-sdk/util-dynamodb/
+COPY --from=builder /build/node_modules/@smithy/ ${LAMBDA_TASK_ROOT}/node_modules/@smithy/
 
 # Set HOME to /tmp so OpenClaw config/sessions go to writable directory
 ENV HOME=/tmp
