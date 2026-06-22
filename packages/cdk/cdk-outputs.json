@@ -1,0 +1,49 @@
+{
+  "NetworkStack": {
+    "PublicSubnetIds": "subnet-05ee614a2edf2b44f,subnet-0f4e05e86b9988655",
+    "ExportsOutputFnGetAttFargateSG90149BB3GroupIdF8DECBAD": "sg-08383941de8e03948",
+    "VpcId": "vpc-0c5f2c83966069df7",
+    "ExportsOutputRefVpcPublicSubnet2Subnet691E08A351552740": "subnet-0f4e05e86b9988655",
+    "SecurityGroupId": "sg-08383941de8e03948",
+    "ExportsOutputRefVpcPublicSubnet1Subnet5C2D37C4FFA2B456": "subnet-05ee614a2edf2b44f"
+  },
+  "StorageStack": {
+    "ExportsOutputFnGetAttSettings1CCB6159ArnEE68AC5C": "arn:aws:dynamodb:us-east-1:515788229331:table/serverless-openclaw-Settings",
+    "ExportsOutputRefEcrRepoBB83A592FA170EC2": "serverless-openclaw",
+    "ExportsOutputFnGetAttEcrRepoBB83A592ArnB6C43A7E": "arn:aws:ecr:us-east-1:515788229331:repository/serverless-openclaw",
+    "ExportsOutputRefTaskStateFB9ED7CEA85066FC": "serverless-openclaw-TaskState",
+    "DataBucketName": "storagestack-databuckete3889a50-qbt5iyozv3me",
+    "ExportsOutputFnGetAttDataBucketE3889A50Arn98F8399F": "arn:aws:s3:::storagestack-databuckete3889a50-qbt5iyozv3me",
+    "ExportsOutputRefPendingMessages593FBEFA7A40F1C3": "serverless-openclaw-PendingMessages",
+    "ExportsOutputFnGetAttTaskStateFB9ED7CEArn9572F5AB": "arn:aws:dynamodb:us-east-1:515788229331:table/serverless-openclaw-TaskState",
+    "ExportsOutputRefConnections827CEF2F0F1035C6": "serverless-openclaw-Connections",
+    "ExportsOutputFnGetAttConversationsBC91B70DArn124B198F": "arn:aws:dynamodb:us-east-1:515788229331:table/serverless-openclaw-Conversations",
+    "ExportsOutputRefSettings1CCB615925C618F2": "serverless-openclaw-Settings",
+    "ExportsOutputRefDataBucketE3889A50250F5285": "storagestack-databuckete3889a50-qbt5iyozv3me",
+    "PendingMessagesTableName": "serverless-openclaw-PendingMessages",
+    "EcrRepositoryUri": "515788229331.dkr.ecr.us-east-1.amazonaws.com/serverless-openclaw",
+    "ConversationsTableName": "serverless-openclaw-Conversations",
+    "ConnectionsTableName": "serverless-openclaw-Connections",
+    "TaskStateTableName": "serverless-openclaw-TaskState",
+    "ExportsOutputFnGetAttPendingMessages593FBEFAArn81A7613B": "arn:aws:dynamodb:us-east-1:515788229331:table/serverless-openclaw-PendingMessages",
+    "ExportsOutputRefConversationsBC91B70D84A67B3C": "serverless-openclaw-Conversations",
+    "SettingsTableName": "serverless-openclaw-Settings",
+    "ExportsOutputFnGetAttConnections827CEF2FArn1632D106": "arn:aws:dynamodb:us-east-1:515788229331:table/serverless-openclaw-Connections"
+  },
+  "AuthStack": {
+    "UserPoolClientId": "4re009como342ra6ped8v26u1l",
+    "UserPoolId": "us-east-1_f5NCT1892",
+    "ExportsOutputRefUserPool6BA7E5F296FD7236": "us-east-1_f5NCT1892",
+    "ExportsOutputRefUserPoolSpaClient6B560FFA03368753": "4re009como342ra6ped8v26u1l",
+    "UserPoolDomainName": "serverless-openclaw-515788229331"
+  },
+  "ComputeStack": {
+    "ClusterArn": "arn:aws:ecs:us-east-1:515788229331:cluster/serverless-openclaw",
+    "TaskDefinitionArn": "arn:aws:ecs:us-east-1:515788229331:task-definition/ComputeStackTaskDefCD5729AC:2"
+  },
+  "ApiStack": {
+    "HttpApiEndpoint": "https://ebbag71982.execute-api.us-east-1.amazonaws.com",
+    "WebSocketCallbackUrl": "https://qp6sf2luc9.execute-api.us-east-1.amazonaws.com/prod",
+    "WebSocketApiEndpoint": "wss://qp6sf2luc9.execute-api.us-east-1.amazonaws.com/prod"
+  }
+}
