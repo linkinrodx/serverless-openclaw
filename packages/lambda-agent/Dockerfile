@@ -22,8 +22,8 @@ RUN cd packages/shared && npm pack
 # Stage 2: Lambda runtime
 FROM --platform=linux/arm64 public.ecr.aws/lambda/nodejs:22
 
-# Install git (required by OpenClaw's npm dependencies)
-RUN dnf install -y git && dnf clean all
+# Install git (required by OpenClaw's npm dependencies) and procps-ng (uptime)
+RUN dnf install -y git procps-ng && dnf clean all
 
 # Install OpenClaw FIRST — gets all its transitive dependencies cleanly
 ARG OPENCLAW_VERSION=2026.2.13
