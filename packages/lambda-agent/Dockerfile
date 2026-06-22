@@ -17,6 +17,7 @@ COPY packages/lambda-agent/src/ packages/lambda-agent/src/
 RUN npm pkg delete scripts.prepare && \
     npm ci
 RUN npm run build --workspace=packages/shared --workspace=packages/lambda-agent
+RUN cd packages/shared && npm pack
 
 # Stage 2: Lambda runtime
 FROM --platform=linux/arm64 public.ecr.aws/lambda/nodejs:22
@@ -42,9 +43,11 @@ RUN cd ${LAMBDA_TASK_ROOT} && \
 # Copy lambda-agent compiled output
 COPY --from=builder /build/packages/lambda-agent/dist/ ${LAMBDA_TASK_ROOT}/dist/
 
-# Copy shared package into node_modules (lambda-agent depends on it)
-COPY --from=builder /build/packages/shared/dist/ ${LAMBDA_TASK_ROOT}/node_modules/@serverless-openclaw/shared/dist/
-COPY --from=builder /build/packages/shared/package.json ${LAMBDA_TASK_ROOT}/node_modules/@serverless-openclaw/shared/
+# Install shared package via npm pack so it's properly registered in node_modules
+COPY --from=builder /build/packages/shared/serverless-openclaw-shared-0.1.0.tgz /tmp/
+RUN cd ${LAMBDA_TASK_ROOT} && \
+    npm install /tmp/serverless-openclaw-shared-0.1.0.tgz && \
+    rm /tmp/serverless-openclaw-shared-0.1.0.tgz
 
 # Set HOME to /tmp so OpenClaw config/sessions go to writable directory
 ENV HOME=/tmp
