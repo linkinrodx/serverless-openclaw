@@ -32,44 +32,47 @@ export async function handler(
   const lock = new SessionLock(event.userId);
   const acquired = await lock.acquire();
   if (!acquired) {
+    console.warn("[agent] session lock held for", event.userId);
     return {
       success: false,
       error: "Session is already being processed",
     };
   }
 
-  if (!initialized) {
-    let apiKey: string | undefined;
+  try {
+    if (!initialized) {
+      let apiKey: string | undefined;
 
-    if (providerConfig.provider === "anthropic") {
-      const ssmKeyPath =
-        process.env.SSM_ANTHROPIC_API_KEY ??
-        "/serverless-openclaw/secrets/anthropic-api-key";
+      if (providerConfig.provider === "anthropic") {
+        const ssmKeyPath =
+          process.env.SSM_ANTHROPIC_API_KEY ??
+          "/serverless-openclaw/secrets/anthropic-api-key";
 
-      const secrets = await resolveSecrets([ssmKeyPath]);
-      apiKey = secrets.get(ssmKeyPath);
-    } else if (providerConfig.provider === "google") {
-      const ssmKeyPath =
-        process.env.SSM_GEMINI_API_KEY ??
-        "/serverless-openclaw/secrets/gemini-api-key";
+        const secrets = await resolveSecrets([ssmKeyPath]);
+        apiKey = secrets.get(ssmKeyPath);
+      } else if (providerConfig.provider === "google") {
+        const ssmKeyPath =
+          process.env.SSM_GEMINI_API_KEY ??
+          "/serverless-openclaw/secrets/gemini-api-key";
 
-      const secrets = await resolveSecrets([ssmKeyPath]);
-      apiKey = secrets.get(ssmKeyPath);
+        const secrets = await resolveSecrets([ssmKeyPath]);
+        apiKey = secrets.get(ssmKeyPath);
+      }
+
+      await initConfig({
+        anthropicApiKey: providerConfig.provider === "anthropic" ? apiKey : undefined,
+        googleApiKey: providerConfig.provider === "google" ? apiKey : undefined,
+        provider: providerConfig.provider,
+        awsRegion: process.env.AWS_REGION,
+      });
+      initialized = true;
+      console.log("[agent] initialized with provider", providerConfig.provider);
     }
 
-    await initConfig({
-      anthropicApiKey: providerConfig.provider === "anthropic" ? apiKey : undefined,
-      googleApiKey: providerConfig.provider === "google" ? apiKey : undefined,
-      provider: providerConfig.provider,
-      awsRegion: process.env.AWS_REGION,
-    });
-    initialized = true;
-  }
+    const sync = new SessionSync(bucket, "/tmp/.openclaw");
+    const sessionFile = await sync.download(event.userId, event.sessionId);
 
-  const sync = new SessionSync(bucket, "/tmp/.openclaw");
-  const sessionFile = await sync.download(event.userId, event.sessionId);
-
-  try {
+    console.log("[agent] starting runAgent for", event.userId, "message length:", event.message.length);
     try {
       const result = await runAgent({
         sessionId: event.sessionId,

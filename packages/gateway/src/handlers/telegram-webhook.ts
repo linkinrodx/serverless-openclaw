@@ -156,9 +156,8 @@ export async function handler(event: {
     taskEnv.push({ name: "TELEGRAM_CHAT_ID", value: String(chatId) });
   }
 
-  console.log("[telegram] routing message", { userId, channel: "telegram", agentRuntime, lambdaAgentFunctionArn: process.env.LAMBDA_AGENT_FUNCTION_ARN });
+  console.log("[telegram] routing message", { userId, channel: "telegram", agentRuntime });
   const lambdaAgentFunctionArn = process.env.LAMBDA_AGENT_FUNCTION_ARN ?? "";
-  console.log("[telegram] debug deps", { hasAsync: !!invokeLambdaAgentAsync, arn: lambdaAgentFunctionArn, runtime: agentRuntime });
   await routeMessage({
     userId,
     message: text,

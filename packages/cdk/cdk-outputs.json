@@ -1,16 +1,6 @@
 {
-  "NetworkStack": {
-    "PublicSubnetIds": "subnet-05ee614a2edf2b44f,subnet-0f4e05e86b9988655",
-    "ExportsOutputFnGetAttFargateSG90149BB3GroupIdF8DECBAD": "sg-08383941de8e03948",
-    "VpcId": "vpc-0c5f2c83966069df7",
-    "ExportsOutputRefVpcPublicSubnet2Subnet691E08A351552740": "subnet-0f4e05e86b9988655",
-    "SecurityGroupId": "sg-08383941de8e03948",
-    "ExportsOutputRefVpcPublicSubnet1Subnet5C2D37C4FFA2B456": "subnet-05ee614a2edf2b44f"
-  },
   "StorageStack": {
     "ExportsOutputFnGetAttSettings1CCB6159ArnEE68AC5C": "arn:aws:dynamodb:us-east-1:515788229331:table/serverless-openclaw-Settings",
-    "ExportsOutputRefEcrRepoBB83A592FA170EC2": "serverless-openclaw",
-    "ExportsOutputFnGetAttEcrRepoBB83A592ArnB6C43A7E": "arn:aws:ecr:us-east-1:515788229331:repository/serverless-openclaw",
     "ExportsOutputRefTaskStateFB9ED7CEA85066FC": "serverless-openclaw-TaskState",
     "DataBucketName": "storagestack-databuckete3889a50-qbt5iyozv3me",
     "ExportsOutputFnGetAttDataBucketE3889A50Arn98F8399F": "arn:aws:s3:::storagestack-databuckete3889a50-qbt5iyozv3me",
@@ -37,9 +27,15 @@
     "ExportsOutputRefUserPoolSpaClient6B560FFA03368753": "4re009como342ra6ped8v26u1l",
     "UserPoolDomainName": "serverless-openclaw-515788229331"
   },
-  "ComputeStack": {
-    "ClusterArn": "arn:aws:ecs:us-east-1:515788229331:cluster/serverless-openclaw",
-    "TaskDefinitionArn": "arn:aws:ecs:us-east-1:515788229331:task-definition/ComputeStackTaskDefCD5729AC:2"
+  "WebStack": {
+    "WebBucketName": "webstack-webbucket12880f5b-qqoxdn5srw5q",
+    "WebAppUrl": "https://d1b1tc820ov4rf.cloudfront.net",
+    "DistributionId": "EX41LK2D8Z0DB",
+    "DistributionDomainName": "d1b1tc820ov4rf.cloudfront.net"
+  },
+  "LambdaAgentStack": {
+    "AgentFunctionArn": "arn:aws:lambda:us-east-1:515788229331:function:serverless-openclaw-agent",
+    "LambdaAgentRepoUri": "515788229331.dkr.ecr.us-east-1.amazonaws.com/serverless-openclaw-lambda-agent"
   },
   "ApiStack": {
     "HttpApiEndpoint": "https://ebbag71982.execute-api.us-east-1.amazonaws.com",

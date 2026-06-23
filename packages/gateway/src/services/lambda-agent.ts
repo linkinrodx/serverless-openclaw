@@ -76,20 +76,19 @@ export async function invokeLambdaAgentAsync(
     disableTools: params.disableTools,
   };
 
-  console.log("[invokeLambdaAgentAsync] sending to", params.functionArn);
   try {
-    const cmd = new InvokeCommand({
-      FunctionName: params.functionArn,
-      InvocationType: "Event",
-      Payload: Buffer.from(JSON.stringify(payload)),
-    });
-    console.log("[invokeLambdaAgentAsync] InvokeCommand created");
-    const result = await lambda.send(cmd);
-    console.log("[invokeLambdaAgentAsync] result", { StatusCode: result.StatusCode, FunctionError: result.FunctionError });
+    const result = await lambda.send(
+      new InvokeCommand({
+        FunctionName: params.functionArn,
+        InvocationType: "Event",
+        Payload: Buffer.from(JSON.stringify(payload)),
+      }),
+    );
+
+    if (result.FunctionError) {
+      console.warn("[lambda] async invoke had error:", result.FunctionError);
+    }
   } catch (err) {
-    console.error("[invokeLambdaAgentAsync] error:", err);
-    throw err;
-  } finally {
-    console.log("[invokeLambdaAgentAsync] completed (or threw)");
+    console.error("[lambda] async invoke failed:", err);
   }
 }
