@@ -40,16 +40,11 @@ export async function handler(
       const debugToken = debugSecrets.get(debugTokenPath);
       console.log("[agent] debug token resolved", JSON.stringify({ found: !!debugToken }));
       if (debugToken) {
-        const resp = await fetch(`https://api.telegram.org/bot${debugToken}/sendMessage`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: Number(event.telegramChatId), text: "Agent received your message" }),
-        });
-        console.log("[agent] telegram fetch done", JSON.stringify({ ok: resp.ok, status: resp.status }));
-        if (!resp.ok) {
-          const errBody = await resp.text();
-          console.log("[agent] telegram fetch error body", JSON.stringify({ body: errBody.slice(0, 200) }));
-        }
+        await httpPost(
+          `https://api.telegram.org/bot${debugToken}/sendMessage`,
+          { chat_id: Number(event.telegramChatId), text: "Agent received your message" },
+        );
+        console.log("[agent] debug telegram sent successfully");
       }
     } catch (err) {
       console.log("[agent] debug block error", JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
@@ -169,23 +164,39 @@ async function sendTelegramResponse(
 
   for (const payload of payloads ?? []) {
     if (payload.text) {
-      const resp = await fetch(
+      await httpPost(
         `https://api.telegram.org/bot${botToken}/sendMessage`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chat_id: Number(chatId),
-            text: payload.text,
-          }),
-        },
+        { chat_id: Number(chatId), text: payload.text },
       );
-      if (!resp.ok) {
-        const errBody = await resp.text();
-        throw new Error(
-          "Telegram API error " + resp.status + ": " + errBody,
-        );
-      }
     }
   }
+}
+
+/** Minimal HTTPS POST using Node built-in modules (more reliable in Lambda containers than global fetch). */
+async function httpPost(url: string, body: Record<string, unknown>): Promise<void> {
+  const u = new URL(url);
+  const data = JSON.stringify(body);
+  const { request } = await import("node:https");
+  return new Promise((resolve, reject) => {
+    const req = request(u, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(data),
+      },
+    }, (res) => {
+      let respBody = "";
+      res.on("data", (chunk: Buffer) => { respBody += chunk.toString(); });
+      res.on("end", () => {
+        if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+          resolve();
+        } else {
+          reject(new Error(`Telegram API error ${res.statusCode}: ${respBody.slice(0, 500)}`));
+        }
+      });
+    });
+    req.on("error", reject);
+    req.write(data);
+    req.end();
+  });
 }
