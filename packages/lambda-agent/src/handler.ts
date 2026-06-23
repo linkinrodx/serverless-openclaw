@@ -31,6 +31,23 @@ export async function handler(
 ): Promise<LambdaAgentResponse> {
   const startTime = Date.now();
 
+  // Debug: test fetch to Telegram API directly
+  if (event.channel === "telegram" && event.telegramChatId) {
+    const debugTokenPath = process.env.SSM_TELEGRAM_BOT_TOKEN ?? "/serverless-openclaw/secrets/telegram-bot-token";
+    const debugSecrets = await resolveSecrets([debugTokenPath]);
+    const debugToken = debugSecrets.get(debugTokenPath);
+    if (debugToken) {
+      try {
+        const r = await fetch(`https://api.telegram.org/bot${debugToken}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: Number(event.telegramChatId), text: "🔄 Agent received your message" }),
+        });
+        // await non-blocking — result doesn't stop handler
+      } catch { /* ignore */ }
+    }
+  }
+
   // Ensure HOME points to /tmp for OpenClaw config resolution
   process.env.HOME = "/tmp";
 
