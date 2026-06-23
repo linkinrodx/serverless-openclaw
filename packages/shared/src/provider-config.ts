@@ -60,7 +60,7 @@ export const PROVIDER_DEFAULTS = {
     openclawProvider: "google",
     openclawApi: "google-generative-ai",
     openclawAuth: "api-key",
-    defaultModel: "gemini-3-flash-preview",
+    defaultModel: "gemini-2.5-flash-lite",
   },
 } as const;
 
