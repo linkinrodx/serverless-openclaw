@@ -32,19 +32,27 @@ export async function handler(
   const startTime = Date.now();
 
   // Debug: test fetch to Telegram API directly
+  console.log("[agent] handler start", JSON.stringify({ channel: event.channel, telegramChatId: event.telegramChatId, userId: event.userId }));
   if (event.channel === "telegram" && event.telegramChatId) {
     const debugTokenPath = process.env.SSM_TELEGRAM_BOT_TOKEN ?? "/serverless-openclaw/secrets/telegram-bot-token";
-    const debugSecrets = await resolveSecrets([debugTokenPath]);
-    const debugToken = debugSecrets.get(debugTokenPath);
-    if (debugToken) {
-      try {
-        const r = await fetch(`https://api.telegram.org/bot${debugToken}/sendMessage`, {
+    try {
+      const debugSecrets = await resolveSecrets([debugTokenPath]);
+      const debugToken = debugSecrets.get(debugTokenPath);
+      console.log("[agent] debug token resolved", JSON.stringify({ found: !!debugToken }));
+      if (debugToken) {
+        const resp = await fetch(`https://api.telegram.org/bot${debugToken}/sendMessage`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: Number(event.telegramChatId), text: "🔄 Agent received your message" }),
+          body: JSON.stringify({ chat_id: Number(event.telegramChatId), text: "Agent received your message" }),
         });
-        // await non-blocking — result doesn't stop handler
-      } catch { /* ignore */ }
+        console.log("[agent] telegram fetch done", JSON.stringify({ ok: resp.ok, status: resp.status }));
+        if (!resp.ok) {
+          const errBody = await resp.text();
+          console.log("[agent] telegram fetch error body", JSON.stringify({ body: errBody.slice(0, 200) }));
+        }
+      }
+    } catch (err) {
+      console.log("[agent] debug block error", JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
     }
   }
 
@@ -117,7 +125,7 @@ export async function handler(
       // Always upload session after run (even if no payloads)
       await sync.upload(event.userId, event.sessionId);
 
-      process.stdout.write("[agent] channel=" + event.channel + " chatId=" + (event.telegramChatId ?? "none") + " payloads=" + (result.payloads?.length ?? 0) + "\n");
+      console.log("[agent] result", JSON.stringify({ channel: event.channel, chatId: event.telegramChatId, payloads: result.payloads?.length ?? 0 }));
       if (event.channel === "telegram" && event.telegramChatId) {
         await sendTelegramResponse(event.telegramChatId, result.payloads);
       }
