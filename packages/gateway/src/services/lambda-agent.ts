@@ -1,13 +1,7 @@
 import { InvokeCommand, LambdaClient } from "@aws-sdk/client-lambda";
-import { NodeHttpHandler } from "@smithy/node-http-handler";
 import type { LambdaAgentEvent, LambdaAgentResponse } from "@serverless-openclaw/shared";
 
-const lambda = new LambdaClient({
-  requestHandler: new NodeHttpHandler({
-    requestTimeout: 5_000,
-    connectionTimeout: 3_000,
-  }),
-});
+const lambda = new LambdaClient({});
 
 export interface InvokeLambdaAgentParams {
   functionArn: string;
