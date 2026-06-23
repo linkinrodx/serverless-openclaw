@@ -163,6 +163,7 @@ export async function handler(event: {
     message: text,
     channel: "telegram",
     connectionId,
+    telegramChatId: String(chatId),
     callbackUrl: process.env.WEBSOCKET_CALLBACK_URL ?? "",
     bridgeAuthToken: secrets.get(process.env.SSM_BRIDGE_AUTH_TOKEN!) ?? "",
     fetchFn: fetch as never,

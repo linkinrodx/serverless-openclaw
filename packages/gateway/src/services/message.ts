@@ -72,6 +72,7 @@ export interface RouteDeps {
   invokeLambdaAgentAsync?: (params: InvokeLambdaAgentParams) => Promise<void>;
   lambdaAgentFunctionArn?: string;
   sessionId?: string;
+  telegramChatId?: string;
   /** Called with agent payloads after a successful synchronous lambda invocation */
   onLambdaResponse?: (payloads: LambdaAgentResponse["payloads"]) => Promise<void>;
   onColdStartPreview?: (previewText: string) => Promise<void>;
@@ -170,12 +171,13 @@ async function invokeColdStartPreview(deps: RouteDeps): Promise<void> {
   if (!deps.invokeLambdaAgent || !deps.lambdaAgentFunctionArn || !deps.onColdStartPreview) return;
 
   const response = await deps.invokeLambdaAgent({
-    functionArn: deps.lambdaAgentFunctionArn,
-    userId: deps.userId,
-    sessionId: deps.sessionId ?? `session-${deps.userId}`,
-    message: deps.message,
-    channel: deps.channel,
-    connectionId: deps.connectionId,
+      functionArn: deps.lambdaAgentFunctionArn,
+      userId: deps.userId,
+      sessionId: deps.sessionId ?? `session-${deps.userId}`,
+      message: deps.message,
+      channel: deps.channel,
+      connectionId: deps.connectionId,
+      telegramChatId: deps.telegramChatId,
     disableTools: true,
   });
 
