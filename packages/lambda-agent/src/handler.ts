@@ -99,6 +99,11 @@ export async function handler(
     } catch (err: unknown) {
       await sync.upload(event.userId, event.sessionId);
 
+      if (event.channel === "telegram" && event.telegramChatId) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        await sendTelegramResponse(event.telegramChatId, [{ text: `Error: ${errorMsg}`, isError: true }]);
+      }
+
       return {
         success: false,
         error: err instanceof Error ? err.message : String(err),

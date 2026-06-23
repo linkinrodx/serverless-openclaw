@@ -1,7 +1,13 @@
 import { InvokeCommand, LambdaClient } from "@aws-sdk/client-lambda";
+import { NodeHttpHandler } from "@smithy/node-http-handler";
 import type { LambdaAgentEvent, LambdaAgentResponse } from "@serverless-openclaw/shared";
 
-const lambda = new LambdaClient({});
+const lambda = new LambdaClient({
+  requestHandler: new NodeHttpHandler({
+    requestTimeout: 5_000,
+    connectionTimeout: 3_000,
+  }),
+});
 
 export interface InvokeLambdaAgentParams {
   functionArn: string;
@@ -70,11 +76,20 @@ export async function invokeLambdaAgentAsync(
     disableTools: params.disableTools,
   };
 
-  await lambda.send(
-    new InvokeCommand({
+  console.log("[invokeLambdaAgentAsync] sending to", params.functionArn);
+  try {
+    const cmd = new InvokeCommand({
       FunctionName: params.functionArn,
       InvocationType: "Event",
       Payload: Buffer.from(JSON.stringify(payload)),
-    }),
-  );
+    });
+    console.log("[invokeLambdaAgentAsync] InvokeCommand created");
+    const result = await lambda.send(cmd);
+    console.log("[invokeLambdaAgentAsync] result", { StatusCode: result.StatusCode, FunctionError: result.FunctionError });
+  } catch (err) {
+    console.error("[invokeLambdaAgentAsync] error:", err);
+    throw err;
+  } finally {
+    console.log("[invokeLambdaAgentAsync] completed (or threw)");
+  }
 }

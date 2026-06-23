@@ -126,7 +126,7 @@ export async function handler(event: {
   console.log("[telegram] resolved userId", { rawUserId, userId, linked: userId !== rawUserId });
 
   // Cold start reply — only relevant for Fargate (Lambda has no persistent task state)
-  const agentRuntime = (process.env.AGENT_RUNTIME as "lambda" | "fargate" | "both") ?? "fargate";
+  const agentRuntime = ((process.env.AGENT_RUNTIME ?? "fargate").trim() as "lambda" | "fargate" | "both");
   if (agentRuntime !== "lambda") {
     const taskState = await getTaskState(dynamoSend, userId);
     const needsColdStart = !taskState || taskState.status === "Starting";
@@ -156,8 +156,9 @@ export async function handler(event: {
     taskEnv.push({ name: "TELEGRAM_CHAT_ID", value: String(chatId) });
   }
 
-  console.log("[telegram] routing message", { userId, channel: "telegram", agentRuntime });
+  console.log("[telegram] routing message", { userId, channel: "telegram", agentRuntime, lambdaAgentFunctionArn: process.env.LAMBDA_AGENT_FUNCTION_ARN });
   const lambdaAgentFunctionArn = process.env.LAMBDA_AGENT_FUNCTION_ARN ?? "";
+  console.log("[telegram] debug deps", { hasAsync: !!invokeLambdaAgentAsync, arn: lambdaAgentFunctionArn, runtime: agentRuntime });
   await routeMessage({
     userId,
     message: text,

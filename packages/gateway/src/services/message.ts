@@ -193,8 +193,11 @@ async function invokeColdStartPreview(deps: RouteDeps): Promise<void> {
 }
 
 export async function routeMessage(deps: RouteDeps): Promise<RouteResult> {
+  console.log("[routeMessage] entering with agentRuntime:", deps.agentRuntime, "hasInvokeAsync:", !!deps.invokeLambdaAgentAsync, "hasArn:", !!deps.lambdaAgentFunctionArn);
   // Lambda-only path — fire-and-forget, agent sends Telegram response directly
-  if (deps.agentRuntime === "lambda" && deps.invokeLambdaAgentAsync && deps.lambdaAgentFunctionArn) {
+  const rt = deps.agentRuntime?.trim();
+  if (rt === "lambda" && deps.invokeLambdaAgentAsync && deps.lambdaAgentFunctionArn) {
+    console.log("[routeMessage] TAKING LAMBDA ASYNC PATH");
     deps.invokeLambdaAgentAsync({
       functionArn: deps.lambdaAgentFunctionArn,
       userId: deps.userId,
@@ -208,7 +211,7 @@ export async function routeMessage(deps: RouteDeps): Promise<RouteResult> {
   }
 
   // Smart routing: when agentRuntime=both, classify based on task state and message hints
-  if (deps.agentRuntime === "both" && deps.invokeLambdaAgent && deps.lambdaAgentFunctionArn) {
+  if (rt === "both" && deps.invokeLambdaAgent && deps.lambdaAgentFunctionArn) {
     const taskState = await deps.getTaskState(deps.userId);
     const decision = classifyRoute({ message: deps.message, taskState });
 
