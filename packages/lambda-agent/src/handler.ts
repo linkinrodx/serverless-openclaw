@@ -89,7 +89,13 @@ export async function handler(
       await sync.upload(event.userId, event.sessionId);
 
       if (event.channel === "telegram" && event.telegramChatId) {
-        await sendTelegramResponse(event.telegramChatId, result.payloads);
+        console.log("[agent] sending telegram response, payloads:", result.payloads?.length);
+        try {
+          await sendTelegramResponse(event.telegramChatId, result.payloads);
+          console.log("[agent] telegram response sent ok");
+        } catch (e) {
+          console.error("[agent] telegram response failed:", e);
+        }
       }
 
       return {
@@ -104,7 +110,13 @@ export async function handler(
 
       if (event.channel === "telegram" && event.telegramChatId) {
         const errorMsg = err instanceof Error ? err.message : String(err);
-        await sendTelegramResponse(event.telegramChatId, [{ text: `Error: ${errorMsg}`, isError: true }]);
+        console.log("[agent] sending telegram error response:", errorMsg);
+        try {
+          await sendTelegramResponse(event.telegramChatId, [{ text: `Error: ${errorMsg}`, isError: true }]);
+          console.log("[agent] telegram error response sent ok");
+        } catch (e) {
+          console.error("[agent] telegram error response also failed:", e);
+        }
       }
 
       return {
