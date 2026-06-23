@@ -31,23 +31,24 @@ export async function handler(
 ): Promise<LambdaAgentResponse> {
   const startTime = Date.now();
 
-  // Debug: test fetch to Telegram API directly
-  console.log("[agent] handler start", JSON.stringify({ channel: event.channel, telegramChatId: event.telegramChatId, userId: event.userId }));
+  // Debug: test Telegram API call — result returned in response for sync invocations
+  let debugTelegramResult: string | undefined;
   if (event.channel === "telegram" && event.telegramChatId) {
     const debugTokenPath = process.env.SSM_TELEGRAM_BOT_TOKEN ?? "/serverless-openclaw/secrets/telegram-bot-token";
     try {
       const debugSecrets = await resolveSecrets([debugTokenPath]);
       const debugToken = debugSecrets.get(debugTokenPath);
-      console.log("[agent] debug token resolved", JSON.stringify({ found: !!debugToken }));
       if (debugToken) {
         await httpPost(
           `https://api.telegram.org/bot${debugToken}/sendMessage`,
           { chat_id: Number(event.telegramChatId), text: "Agent received your message" },
         );
-        console.log("[agent] debug telegram sent successfully");
+        debugTelegramResult = "ok";
+      } else {
+        debugTelegramResult = "no-token";
       }
     } catch (err) {
-      console.log("[agent] debug block error", JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
+      debugTelegramResult = err instanceof Error ? err.message : String(err);
     }
   }
 
@@ -128,6 +129,7 @@ export async function handler(
       return {
         success: true,
         payloads: result.payloads,
+        debugTelegramResult,
         durationMs: Date.now() - startTime,
         provider: result.meta.agentMeta.provider,
         model: result.meta.agentMeta.model,
@@ -139,6 +141,7 @@ export async function handler(
       return {
         success: false,
         error: err instanceof Error ? err.message : String(err),
+        debugTelegramResult,
         durationMs: Date.now() - startTime,
       };
     }
