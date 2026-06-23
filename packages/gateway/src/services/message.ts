@@ -202,6 +202,7 @@ export async function routeMessage(deps: RouteDeps): Promise<RouteResult> {
       message: deps.message,
       channel: deps.channel,
       connectionId: deps.connectionId,
+      telegramChatId: deps.telegramChatId,
     }).catch((err) => console.error("[lambda] async invoke failed:", err));
     return "lambda";
   }
@@ -241,6 +242,7 @@ export async function routeMessage(deps: RouteDeps): Promise<RouteResult> {
       message: deps.message,
       channel: deps.channel,
       connectionId: deps.connectionId,
+      telegramChatId: deps.telegramChatId,
     });
     if (response.success) {
       if (deps.onLambdaResponse) {
