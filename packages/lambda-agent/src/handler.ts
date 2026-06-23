@@ -10,50 +10,15 @@ import { SessionLock } from "./session-lock.js";
 import { resolveSecrets } from "./secrets.js";
 import { runAgent } from "./agent-runner.js";
 
-// Resolved once at cold start
 const providerConfig = resolveProviderConfig();
 
-// Initialized once per Lambda cold start
 let initialized = false;
 
-/**
- * Lambda handler that runs OpenClaw's agent runtime directly.
- *
- * Flow:
- * 1. Resolve secrets from SSM (cached per instance)
- * 2. Initialize OpenClaw config in /tmp
- * 3. Download session file from S3
- * 4. Run agent via runEmbeddedPiAgent()
- * 5. Upload session file back to S3
- * 6. If Telegram channel, send response directly via Telegram API
- */
 export async function handler(
   event: LambdaAgentEvent,
 ): Promise<LambdaAgentResponse> {
   const startTime = Date.now();
 
-  // Debug: test Telegram API call — result returned in response for sync invocations
-  let debugTelegramResult: string | undefined;
-  if (event.channel === "telegram" && event.telegramChatId) {
-    const debugTokenPath = process.env.SSM_TELEGRAM_BOT_TOKEN ?? "/serverless-openclaw/secrets/telegram-bot-token";
-    try {
-      const debugSecrets = await resolveSecrets([debugTokenPath]);
-      const debugToken = debugSecrets.get(debugTokenPath);
-      if (debugToken) {
-        await httpPost(
-          `https://api.telegram.org/bot${debugToken}/sendMessage`,
-          { chat_id: Number(event.telegramChatId), text: "Agent received your message" },
-        );
-        debugTelegramResult = "ok";
-      } else {
-        debugTelegramResult = "no-token";
-      }
-    } catch (err) {
-      debugTelegramResult = err instanceof Error ? err.message : String(err);
-    }
-  }
-
-  // Ensure HOME points to /tmp for OpenClaw config resolution
   process.env.HOME = "/tmp";
 
   const bucket = process.env.SESSION_BUCKET;
@@ -73,7 +38,6 @@ export async function handler(
     };
   }
 
-  // Cold start initialization
   if (!initialized) {
     let apiKey: string | undefined;
 
@@ -119,10 +83,8 @@ export async function handler(
         channel: event.channel,
       });
 
-      // Always upload session after run (even if no payloads)
       await sync.upload(event.userId, event.sessionId);
 
-      console.log("[agent] result", JSON.stringify({ channel: event.channel, chatId: event.telegramChatId, payloads: result.payloads?.length ?? 0 }));
       if (event.channel === "telegram" && event.telegramChatId) {
         await sendTelegramResponse(event.telegramChatId, result.payloads);
       }
@@ -130,19 +92,16 @@ export async function handler(
       return {
         success: true,
         payloads: result.payloads,
-        debugTelegramResult,
         durationMs: Date.now() - startTime,
         provider: result.meta.agentMeta.provider,
         model: result.meta.agentMeta.model,
       };
     } catch (err: unknown) {
-      // Upload session even on error (partial transcript may be valuable)
       await sync.upload(event.userId, event.sessionId);
 
       return {
         success: false,
         error: err instanceof Error ? err.message : String(err),
-        debugTelegramResult,
         durationMs: Date.now() - startTime,
       };
     }
