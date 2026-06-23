@@ -96,6 +96,7 @@ export interface LambdaAgentResponse {
   success: boolean;
   payloads?: Array<{ text?: string; mediaUrl?: string; isError?: boolean }>;
   error?: string;
+  debugTelegramResult?: string;
   durationMs?: number;
   provider?: string;
   model?: string;
