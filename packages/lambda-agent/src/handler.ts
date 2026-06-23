@@ -2,6 +2,7 @@ import type {
   LambdaAgentEvent,
   LambdaAgentResponse,
 } from "./types.js";
+import { request as httpsRequest } from "node:https";
 import { resolveProviderConfig } from "@serverless-openclaw/shared";
 import { initConfig } from "./config-init.js";
 import { SessionSync } from "./session-sync.js";
@@ -179,9 +180,8 @@ async function sendTelegramResponse(
 async function httpPost(url: string, body: Record<string, unknown>): Promise<void> {
   const u = new URL(url);
   const data = JSON.stringify(body);
-  const { request } = await import("node:https");
   return new Promise((resolve, reject) => {
-    const req = request(u, {
+    const req = httpsRequest(u, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
