@@ -193,10 +193,10 @@ async function invokeColdStartPreview(deps: RouteDeps): Promise<void> {
 }
 
 export async function routeMessage(deps: RouteDeps): Promise<RouteResult> {
-  // Lambda-only path — fire-and-forget, agent sends Telegram response directly
+  // Lambda-only path — invoke async, await the 202 response, agent sends Telegram response directly
   const rt = deps.agentRuntime?.trim();
   if (rt === "lambda" && deps.invokeLambdaAgentAsync && deps.lambdaAgentFunctionArn) {
-    deps.invokeLambdaAgentAsync({
+    await deps.invokeLambdaAgentAsync({
       functionArn: deps.lambdaAgentFunctionArn,
       userId: deps.userId,
       sessionId: deps.sessionId ?? `session-${deps.userId}`,
