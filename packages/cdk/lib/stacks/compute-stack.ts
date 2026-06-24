@@ -101,7 +101,7 @@ export class ComputeStack extends cdk.Stack {
         DATA_BUCKET: props.dataBucket.bucketName,
         BRIDGE_PORT: String(BRIDGE_PORT),
         METRICS_ENABLED: "true",
-        AI_PROVIDER: props.aiProvider ?? "anthropic",
+        AI_PROVIDER: props.aiProvider ?? "google",
         ...(props.aiModel ? { AI_MODEL: props.aiModel } : {}),
         AWS_REGION: this.region,
       },
