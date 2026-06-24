@@ -48,6 +48,7 @@ export class SecretsStack extends cdk.Stack {
             Name: path,
             Type: "SecureString",
             Value: cfnParam.valueAsString,
+            Overwrite: true,
           },
           physicalResourceId: cr.PhysicalResourceId.of(path),
         },
